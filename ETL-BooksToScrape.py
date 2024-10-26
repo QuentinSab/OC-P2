@@ -1,18 +1,22 @@
 import requests
-import csv
 from bs4 import BeautifulSoup
 
-import requests
-
-from bs4 import BeautifulSoup
-
-url = "http://books.toscrape.com/catalogue/the-requiem-red_995/index.html"
+url = "http://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
 page = requests.get(url)
-soup = BeautifulSoup(page.content, 'html.parser')
-titre = soup.find_all("h1")
-titre_text = []
 
-for h1 in titre:
-    titre_text.append(h1.string)
+if page.status_code == 200:
     
-print(titre_text[0])
+    soup = BeautifulSoup(page.text, 'html.parser')
+    
+    titles = [a['title'] for a in soup.find_all('a', title=True)]
+    for title in titles:
+        print(title)
+    
+    class_price = "price_color"
+    prices = soup.find_all("p", class_=class_price)
+    for price in prices:
+        print(price.text[2:])
+        
+else:
+    
+    print(f"Erreur {page.status_code} lors de la requête de : {url}")
