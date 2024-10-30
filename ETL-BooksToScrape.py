@@ -1,5 +1,7 @@
 from etl_functions import *
 
-url = "http://books.toscrape.com/catalogue/the-requiem-red_995/index.html"
+category_url = "http://books.toscrape.com/catalogue/category/books/mystery_3/index.html"
 
-extract_page(url)
+fichier_csv = "scrapped_books/mon_fichier.csv"
+
+extract_category_data(category_url, fichier_csv)

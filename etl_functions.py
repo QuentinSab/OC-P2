@@ -1,32 +1,69 @@
+import csv
 from re import search
 import requests
 from bs4 import BeautifulSoup
+
+def extract_category_data(category_url, fichier_csv):
+    
+    with open(fichier_csv, mode='w', newline='', encoding='utf-8') as fichier:
+        header = ["product_page_url", "universal_product_code (upc)", "title", "price_including_tax", "price_excluding_tax", "number_available", "product_description", "category", "review_rating", "image_url"]
+        writer = csv.writer(fichier)
         
-def extract_page(url):
-    page = requests.get(url)
+        writer.writerow(header)
+        
+        for livre_url in extract_category_livres_url(category_url):
+            book_data = extract_livre_data(livre_url)
+            writer.writerow(book_data)
+
+    print(f"{fichier_csv} édité avec succès.")
+
+def extract_category_livres_url(category_url):
+    soup = extract_page(category_url)
+        
+    livres_url = []
+        
+    extract_page_livres_url(soup, livres_url)
+        
+    while soup.find("li", class_="next"):
+        category_n_page = 1
+        category_n_page += 1
+        category_url = (category_url[:-10] + "page-" + str(category_n_page) + ".html")
+        soup = extract_page(category_url)
+        
+        extract_page_livres_url(soup, livres_url)
+        
+    return(livres_url)
+               
+def extract_page(page_url):
+    page = requests.get(page_url)
     if page.status_code == 200:     
         soup = BeautifulSoup(page.text, 'html.parser')
-        
-        book_data = []
-        
-        book_data.append(url)
-        extract_upc(soup, book_data)
-        extract_title(soup, book_data) 
-        extract_price_incl_tax(soup, book_data)
-        extract_price_excl_tax(soup, book_data)
-        extract_stock(soup, book_data)
-        extract_description(soup, book_data)
-        extract_category(soup, book_data)
-        extract_rating(soup, book_data)
-        extract_url_img(soup, book_data)
-    
-        #return (book_data)
-        for data in book_data:
-            print(data)
-        
+        return (soup)
     else: 
-        print(f"Erreur {page.status_code} lors de la requête de : {url}")
-
+        print(f"Erreur {page.status_code} lors de la requête de : {page_url}")
+      
+def extract_page_livres_url(soup, livres_url):
+    for h3 in soup.find_all('h3'):
+        livre_url = "http://books.toscrape.com/catalogue/" + (h3.find('a')["href"][9:])            
+        livres_url.append(livre_url)
+        
+def extract_livre_data(livre_url):
+    soup = extract_page(livre_url)    
+    book_data = []
+        
+    book_data.append(livre_url)
+    extract_upc(soup, book_data)
+    extract_title(soup, book_data) 
+    extract_price_incl_tax(soup, book_data)
+    extract_price_excl_tax(soup, book_data)
+    extract_stock(soup, book_data)
+    extract_description(soup, book_data)
+    extract_category(soup, book_data)
+    extract_rating(soup, book_data)
+    extract_url_img(soup, book_data)
+    
+    return (book_data)
+        
 def extract_upc(soup, book_data):
     td = soup.find_all("td")
     book_data.append(td[0].text)
@@ -69,8 +106,8 @@ def extract_rating(soup, book_data):
     book_data.append(rating)
     
 def extract_url_img(soup, book_data):
-    product_img = soup.find("img")   
-    book_data.append("http://books.toscrape.com" + product_img["src"][5:])
+    url_img = soup.find("img")   
+    book_data.append("http://books.toscrape.com" + url_img["src"][5:])
     
 def stock_to_int(stock_str):
     stock = search('(\d+)', stock_str)
