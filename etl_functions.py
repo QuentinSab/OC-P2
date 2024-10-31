@@ -10,6 +10,7 @@ def extract_category_data(category_url, fichier_csv):
         writer = csv.writer(fichier)
         
         writer.writerow(header)
+        print(f"Écriture de {fichier_csv} en cours ...")
         
         for livre_url in extract_category_livres_url(category_url):
             book_data = extract_livre_data(livre_url)
@@ -21,15 +22,14 @@ def extract_category_livres_url(category_url):
     soup = extract_page(category_url)
         
     livres_url = []
-        
+    category_n_page = 1
+    
     extract_page_livres_url(soup, livres_url)
         
     while soup.find("li", class_="next"):
-        category_n_page = 1
         category_n_page += 1
-        category_url = (category_url[:-10] + "page-" + str(category_n_page) + ".html")
+        category_url = (category_url.rpartition("/")[0] + "/page-" + str(category_n_page) + ".html")
         soup = extract_page(category_url)
-        
         extract_page_livres_url(soup, livres_url)
         
     return(livres_url)
