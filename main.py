@@ -2,6 +2,7 @@
 import csv
 import os
 from re import search
+from datetime import date
 import requests
 from bs4 import BeautifulSoup
 
@@ -10,32 +11,42 @@ base_url = "http://books.toscrape.com"
 def etl_site():
     soup = get_page(base_url + "/index.html")
 
-    directory_name = "scrapped_books"
+    main_directory_name = create_scrap_directory()
 
+    print(f"Écriture de {main_directory_name} en cours ...")
     for a_category in get_categories(soup):  
         category_url = get_category_url(a_category)
+        category_name = get_category_name(category_url)
         
-        if not os.path.exists(directory_name):
-            os.mkdir(directory_name)
+        category_image_path = create_category_directory(category_name, main_directory_name)
         
-        file_csv_name = (directory_name + "/" + get_category_name(category_url) + ".csv")
-        
-        load_data(category_url, file_csv_name)
+        file_csv_name = (main_directory_name + "/" + category_name + "_data.csv")
+         
+        load_data(category_url, file_csv_name, category_image_path)
+    print(f"Écriture de {main_directory_name} terminée")
 
-def load_data(category_url, file_csv):
+def load_data(category_url, file_csv, category_image_path):
     
     with open(file_csv, mode='w', newline='', encoding='utf-8') as fichier:
         header = ["product_page_url", "universal_product_code (upc)", "title", "price_including_tax", "price_excluding_tax", "number_available", "product_description", "category", "review_rating", "image_url"]
         writer = csv.writer(fichier)
         
         writer.writerow(header)
-        print(f"Écriture de {file_csv} en cours ...")
         
-        for book_url in get_all_books_url(category_url):
+        for book_url in get_books_url(category_url):
             book_data = extract_book_data(book_url)
             writer.writerow(book_data)
-
+            
+            download_image(book_data, category_image_path)
+    
     print(f"{file_csv} édité avec succès.")
+
+def download_image(book_data, category_image_path):
+    img_data = requests.get(book_data[9]).content
+    file_image_name = get_image_name(book_data[0])
+    
+    with open(category_image_path + "/" + file_image_name + ".jpg", 'wb') as img_file:
+        img_file.write(img_data)
 
 def get_categories(soup):
     ul_category = soup.find_all("ul")[2]
@@ -48,10 +59,15 @@ def get_category_url(category):
 
 def get_category_name(category_url):
     category_name_part = category_url.rsplit("/", 2)[1]
-    category_name = category_name_part.split('_', 1)[0]
+    category_name = category_name_part.split("_", 1)[0]
     return (category_name)
 
-def get_all_books_url(category_url):
+def get_image_name(image_url):
+    image_name = image_url.rsplit("/", 2)[1]
+    image_name = image_name.rsplit("_", 1)[0]
+    return (image_name)
+
+def get_books_url(category_url):
     soup = get_page(category_url)
         
     books_url = []
@@ -161,4 +177,22 @@ def transform_rating(text_rating):
         case _:
             return ("Erreur : Rating invalide")
 
+def create_scrap_directory():
+    current_date = date.today()
+    str_current_date = current_date.strftime("%d-%m-%Y")
+    directory_name = "books_to_scrape_" + str_current_date
+
+    if not os.path.exists(directory_name):
+        os.mkdir(directory_name)
+        print("Création du dossier " + directory_name)
+        
+    return (directory_name)
+
+def create_category_directory(category_name, main_directory_name):
+    category_image_path = main_directory_name + "/" + category_name + "_image"
+    if not os.path.exists(category_image_path):
+        os.mkdir(category_image_path)
+    
+    return(category_image_path)
+        
 etl_site()
