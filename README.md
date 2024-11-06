@@ -1,6 +1,6 @@
 # OC-P2
 
-# Project Title
+This program is used to extract data from books on the site http://books.toscrape.com/index.html
 
 ## Requirements
 
@@ -9,7 +9,7 @@
 
 ## Setup
 
-### 1. Clone the Repository
+### 1. Clone the repository
 
 Open your terminal and clone the project repository using the following command:
 
@@ -23,28 +23,36 @@ Change into the project directory:
 
 To create a virtual environment with venv:
 
-    python -m venv venv
+    python -m venv env
 
 ### 3. Activate the virtual environment
 
-To activate the virtual environment, use the following command:
+To activate the virtual environment, use:
 
 On Windows:
 
-    venv\Scripts\activate
+    env\Scripts\activate
 
 On macOS/Linux:
 
-    source venv/bin/activate
+    source env/bin/activate
 
-### 4. Install Dependencies
+### 4. Install dependencies
 
 With the virtual environment activated, install the required packages listed in requirements.txt using the following command:
 
     pip install -r requirements.txt
 
-### 5. Run the Application
+## Usage
 
-To execute the main file, use the following command:
+### 1. Running the program for all books
+
+Run main.py without any arguments to extract data for all books on the site:
 
     python main.py
+
+### 2. Running the program for a single category
+
+To extract data from a specific category only, run main.py with the category URL as an argument:
+
+    python main.py http://books.toscrape.com/catalogue/category/books/example-category/index.html

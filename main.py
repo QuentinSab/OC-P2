@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import csv
 import os
+import sys
 from re import search
 from datetime import date
 import requests
@@ -8,22 +9,19 @@ from bs4 import BeautifulSoup
 
 base_url = "http://books.toscrape.com"
 
-def etl_site():
+def etl_site(main_directory_name):
     soup = get_page(base_url + "/index.html")
 
-    main_directory_name = create_scrap_directory()
-
-    print(f"Écriture de {main_directory_name} en cours ...")
     for a_category in get_categories(soup):  
         category_url = get_category_url(a_category)
-        category_name = get_category_name(category_url)
-        
-        category_image_path = create_category_directory(category_name, main_directory_name)
-        
-        file_csv_name = (main_directory_name + "/" + category_name + "_data.csv")
-         
-        load_data(category_url, file_csv_name, category_image_path)
-    print(f"Écriture de {main_directory_name} terminée")
+        etl_category(category_url, main_directory_name)
+
+def etl_category(category_url, main_directory_name): 
+    category_name = get_category_name(category_url)            
+    category_image_path = create_category_directory(category_name, main_directory_name)             
+    file_csv_name = (main_directory_name + "/" + category_name + "_data.csv")
+                
+    load_data(category_url, file_csv_name, category_image_path)
 
 def load_data(category_url, file_csv, category_image_path):
     
@@ -107,7 +105,7 @@ def extract_book_data(book_url):
     extract_price_excl_tax(soup, book_data)
     extract_stock(soup, book_data)
     extract_description(soup, book_data)
-    extract_category(soup, book_data)
+    extract_category_name(soup, book_data)
     extract_rating(soup, book_data)
     extract_url_img(soup, book_data)
     
@@ -144,7 +142,7 @@ def extract_description(soup, book_data):
     product_description = div_product_description.find_next("p")
     book_data.append(product_description.text)
 
-def extract_category(soup, book_data):
+def extract_category_name(soup, book_data):
     anchor = soup.find_all("a")
     book_data.append(anchor[3].text)
 
@@ -194,5 +192,18 @@ def create_category_directory(category_name, main_directory_name):
         os.mkdir(category_image_path)
     
     return(category_image_path)
-        
-etl_site()
+
+def main():
+    main_directory_name = create_scrap_directory()
+    print(f"Écriture de {main_directory_name} en cours ...")
+    
+    if len(sys.argv) < 2:
+        etl_site(main_directory_name)
+        sys.exit(1)
+    
+    elif len(sys.argv) == 2:
+        if (sys.argv[1].rsplit("/", 3)[0]) == (base_url + "/catalogue/category"):
+            etl_category(sys.argv[1], main_directory_name)
+            sys.exit(1)
+             
+main()
