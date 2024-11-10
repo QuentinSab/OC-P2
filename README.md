@@ -51,8 +51,14 @@ Run main.py without any arguments to extract data for all books on the site:
 
     python main.py
 
-### 2. Running the program for a single category
+### 2. Running the program for a single book or category
 
-To extract data from a specific category only, run main.py with the category URL as an argument:
+To extract data from a specific book or category only, run main.py with the URL as an argument:
+
+For a book:
+
+    python main.py http://books.toscrape.com/catalogue/example-book/index.html
+
+For a category:
 
     python main.py http://books.toscrape.com/catalogue/category/books/example-category/index.html
